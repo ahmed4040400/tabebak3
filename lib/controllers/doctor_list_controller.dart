@@ -1,98 +1,29 @@
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
-import 'package:faker/faker.dart' as faker;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/user_model.dart';
 
 class DoctorListController extends GetxController {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   final isGridView = false.obs;
   final selectedSpecialty = 'All'.obs;
   final TextEditingController searchController = TextEditingController();
-  final RxList<Doctor> doctors = <Doctor>[].obs;
-  final RxList<Doctor> filteredDoctors = <Doctor>[].obs;
+  final RxList<UserModel> doctors = <UserModel>[].obs;
+  final RxList<UserModel> filteredDoctors = <UserModel>[].obs;
   final RxList<String> specialties = <String>['All'].obs;
+  final isLoading = false.obs;
 
-  // Egyptian male first names
-  final List<String> egyptianMaleFirstNames = [
-    'Ahmed',
-    'Mohamed',
-    'Mahmoud',
-    'Ali',
-    'Omar',
-    'Mostafa',
-    'Khaled',
-    'Ibrahim',
-    'Amr',
-    'Ayman',
-    'Tarek',
-    'Hossam',
-    'Sherif',
-    'Karim',
-    'Hesham',
-    'Youssef',
-    'Hassan',
-    'Hussein',
-    'Abdallah',
-    'Samir',
-  ];
-
-  // Egyptian female first names
-  final List<String> egyptianFemaleFirstNames = [
-    'Nour',
-    'Mariam',
-    'Fatma',
-    'Sara',
-    'Aya',
-    'Heba',
-    'Mona',
-    'Amira',
-    'Dina',
-    'Laila',
-    'Yasmin',
-    'Salma',
-    'Hala',
-    'Rania',
-    'Reem',
-    'Mayar',
-    'Farah',
-    'Eman',
-    'Esraa',
-    'Noha',
-  ];
-
-  // Egyptian last names
-  final List<String> egyptianLastNames = [
-    'Mohamed',
-    'Ahmed',
-    'Ibrahim',
-    'El-Masry',
-    'El-Sayed',
-    'Mahmoud',
-    'Abdelrahman',
-    'El-Sherif',
-    'Mostafa',
-    'Ali',
-    'Hassan',
-    'Hussein',
-    'El-Din',
-    'Salah',
-    'Kamal',
-    'Osman',
-    'Gamal',
-    'El-Baz',
-    'Farouk',
-    'Nasser',
-    'Fawzy',
-    'Shawky',
-    'El-Naggar',
-    'Abouzeid',
-    'Zaki',
-  ];
+  // Pagination properties
+  final int limit = 10;
+  DocumentSnapshot? lastDocument;
+  final RxBool hasMoreDoctors = true.obs;
+  final RxBool isLoadingMore = false.obs;
 
   @override
   void onInit() {
     super.onInit();
-    generateDoctors();
-    filteredDoctors.value = doctors;
-    updateSpecialties();
+    fetchDoctors();
   }
 
   @override
@@ -101,74 +32,81 @@ class DoctorListController extends GetxController {
     super.onClose();
   }
 
+  Future<void> fetchDoctors({bool isRefresh = false}) async {
+    if (isRefresh) {
+      doctors.clear();
+      lastDocument = null;
+      hasMoreDoctors.value = true;
+    }
+
+    if (!hasMoreDoctors.value) return;
+
+    isLoading.value = true;
+    try {
+      Query query = _firestore
+          .collection('users')
+          .where('role', isEqualTo: 'doctor')
+          .limit(limit);
+
+      // If this is not the first page, start after the last document
+      if (lastDocument != null) {
+        query = query.startAfterDocument(lastDocument!);
+      }
+
+      QuerySnapshot snapshot = await query.get();
+
+      if (snapshot.docs.isEmpty) {
+        hasMoreDoctors.value = false;
+        return;
+      }
+
+      if (snapshot.docs.length < limit) {
+        hasMoreDoctors.value = false;
+      }
+
+      // Save the last document for next query
+      lastDocument = snapshot.docs.last;
+
+      List<UserModel> newDoctors =
+          snapshot.docs.map((doc) => UserModel.fromFirestore(doc)).toList();
+
+      doctors.addAll(newDoctors);
+      filteredDoctors.value = doctors;
+      updateSpecialties();
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to fetch doctors: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> loadMoreDoctors() async {
+    if (isLoadingMore.value || !hasMoreDoctors.value) return;
+
+    isLoadingMore.value = true;
+    try {
+      await fetchDoctors();
+      // After fetching, reapply any active filters
+      filterDoctors();
+    } finally {
+      isLoadingMore.value = false;
+    }
+  }
+
   void updateSpecialties() {
     final Set<String> uniqueSpecialties = {'All'};
     for (final doctor in doctors) {
-      uniqueSpecialties.add(doctor.specialty);
+      if (doctor.specialty != null && doctor.specialty!.isNotEmpty) {
+        uniqueSpecialties.add(doctor.specialty!);
+      }
     }
     specialties.value = uniqueSpecialties.toList();
-  }
-
-  void generateDoctors() {
-    final fakerInstance = faker.Faker();
-    final List<Doctor> generatedDoctors = [];
-
-    for (int i = 0; i < 20; i++) {
-      final specialtiesList = [
-        'Cardiologist',
-        'Dermatologist',
-        'Pediatrician',
-        'Orthopedist',
-        'Neurologist',
-        'Ophthalmologist',
-        'Psychiatrist',
-        'Gynecologist',
-        'Urologist',
-      ];
-
-      final specialty =
-          specialtiesList[fakerInstance.randomGenerator.integer(
-            specialtiesList.length,
-          )];
-
-      // Determine gender and select appropriate Egyptian name
-      final gender =
-          fakerInstance.randomGenerator.boolean() ? 'male' : 'female';
-
-      String firstName;
-      if (gender == 'male') {
-        firstName =
-            egyptianMaleFirstNames[fakerInstance.randomGenerator.integer(
-              egyptianMaleFirstNames.length,
-            )];
-      } else {
-        firstName =
-            egyptianFemaleFirstNames[fakerInstance.randomGenerator.integer(
-              egyptianFemaleFirstNames.length,
-            )];
-      }
-
-      final lastName =
-          egyptianLastNames[fakerInstance.randomGenerator.integer(
-            egyptianLastNames.length,
-          )];
-
-      generatedDoctors.add(
-        Doctor(
-          name: 'Dr. $firstName $lastName',
-          specialty: specialty,
-          rating: 3.5 + fakerInstance.randomGenerator.decimal() * 1.5,
-          reviewCount: fakerInstance.randomGenerator.integer(500) + 20,
-          distance: fakerInstance.randomGenerator.integer(5000) + 100,
-          experience: fakerInstance.randomGenerator.integer(20) + 1,
-          isAvailable: fakerInstance.randomGenerator.boolean(),
-          gender: gender,
-          price: (fakerInstance.randomGenerator.integer(150) + 50).toDouble(),
-        ),
-      );
-    }
-
-    doctors.value = generatedDoctors;
   }
 
   void filterDoctors() {
@@ -182,14 +120,13 @@ class DoctorListController extends GetxController {
                 doc.name.toLowerCase().contains(
                   searchController.text.toLowerCase(),
                 ) ||
-                doc.specialty.toLowerCase().contains(
-                  searchController.text.toLowerCase(),
-                );
-
+                (doc.specialty != null &&
+                    doc.specialty!.toLowerCase().contains(
+                      searchController.text.toLowerCase(),
+                    ));
             final matchesSpecialty =
                 selectedSpecialty.value == 'All' ||
                 doc.specialty == selectedSpecialty.value;
-
             return matchesSearch && matchesSpecialty;
           }).toList();
     }
@@ -205,41 +142,22 @@ class DoctorListController extends GetxController {
     } else {
       selectedSpecialty.value = 'All';
     }
-    filterDoctors();
+
+    // Reset pagination and reload when specialty changes
+    if (selectedSpecialty.value != specialty) {
+      fetchDoctors(isRefresh: true);
+    } else {
+      filterDoctors();
+    }
   }
 
   void clearSearch() {
     searchController.clear();
     filterDoctors();
   }
-}
 
-class Doctor {
-  final String name;
-  final String specialty;
-  final double rating;
-  final int reviewCount;
-  final int distance;
-  final int experience;
-  final bool isAvailable;
-  final String gender;
-  final double price;
-
-  Doctor({
-    required this.name,
-    required this.specialty,
-    required this.rating,
-    required this.reviewCount,
-    required this.distance,
-    required this.experience,
-    required this.isAvailable,
-    required this.gender,
-    required this.price,
-  });
-
-  String get distanceText {
-    return distance < 1000
-        ? '${distance}m away'
-        : '${(distance / 1000).toStringAsFixed(1)}km away';
+  // Add a refresh method to reset pagination and reload
+  Future<void> refreshDoctors() async {
+    await fetchDoctors(isRefresh: true);
   }
 }

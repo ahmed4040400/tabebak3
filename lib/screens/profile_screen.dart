@@ -1,112 +1,95 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProfileScreen extends StatelessWidget {
-  ProfileScreen({Key? key}) : super(key: key);
-
-  final AuthController authController = Get.find<AuthController>();
+  const ProfileScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // Get the auth controller instance
+    final AuthController authController = Get.find<AuthController>();
+
+    // Get current user directly from Firebase Auth
+    final User? currentUser = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Profile'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            // Profile Avatar
-            CircleAvatar(
-              radius: 60,
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              child: const Text(
-                'U',
-                style: TextStyle(fontSize: 60, color: Colors.white),
+      body:
+          currentUser == null
+              ? const Center(child: Text('Please login to view your profile'))
+              : SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 20),
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundImage:
+                          currentUser.photoURL != null
+                              ? NetworkImage(currentUser.photoURL!)
+                              : const AssetImage(
+                                    'assets/profile_placeholder.png',
+                                  )
+                                  as ImageProvider,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      currentUser.displayName ?? 'User',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      currentUser.email ?? 'No email available',
+                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                    ),
+                    const SizedBox(height: 24),
+                    _buildProfileItem(
+                      Icons.medical_information,
+                      'Doctors',
+                      onTap: () => Get.toNamed('/doctors'),
+                    ),
+                    _buildProfileItem(Icons.history, 'Medical History'),
+                    _buildProfileItem(Icons.payment, 'Payment Methods'),
+                    _buildProfileItem(Icons.settings, 'Settings'),
+                    _buildProfileItem(Icons.help, 'Help & Support'),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () {
+                        authController.logout();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(double.infinity, 50),
+                      ),
+                      child: const Text('Logout'),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'User Name',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const Text('user@example.com'),
-            const SizedBox(height: 40),
-
-            // Profile Options
-            _buildProfileOption(
-              context,
-              icon: Icons.person,
-              title: 'Personal Information',
-              onTap: () {},
-            ),
-            _buildDivider(),
-            _buildProfileOption(
-              context,
-              icon: Icons.history,
-              title: 'Medical History',
-              onTap: () {},
-            ),
-            _buildDivider(),
-            _buildProfileOption(
-              context,
-              icon: Icons.calendar_today,
-              title: 'My Appointments',
-              onTap: () {},
-            ),
-            _buildDivider(),
-            _buildProfileOption(
-              context,
-              icon: Icons.favorite,
-              title: 'Favorite Doctors',
-              onTap: () {},
-            ),
-            _buildDivider(),
-            _buildProfileOption(
-              context,
-              icon: Icons.settings,
-              title: 'Settings',
-              onTap: () {},
-            ),
-            _buildDivider(),
-            _buildProfileOption(
-              context,
-              icon: Icons.logout,
-              title: 'Logout',
-              onTap: authController.logout,
-              textColor: Colors.red,
-            ),
-          ],
-        ),
-      ),
     );
   }
 
-  Widget _buildProfileOption(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required Function() onTap,
-    Color? textColor,
-  }) {
+  Widget _buildProfileItem(IconData icon, String title, {VoidCallback? onTap}) {
     return ListTile(
-      leading: Icon(
-        icon,
-        color: textColor ?? Theme.of(context).colorScheme.primary,
-      ),
-      title: Text(
-        title,
-        style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
-      ),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-      onTap: onTap,
+      leading: Icon(icon, color: Colors.teal),
+      title: Text(title),
+      trailing: const Icon(Icons.chevron_right),
+      onTap:
+          onTap ??
+          () {
+            // Handle navigation to specific profile sections
+          },
     );
-  }
-
-  Widget _buildDivider() {
-    return const Divider(height: 1, thickness: 1);
   }
 }

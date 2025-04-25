@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/doctor_list_controller.dart';
+import '../models/user_model.dart';
 
 class DoctorListScreen extends StatelessWidget {
   const DoctorListScreen({Key? key}) : super(key: key);
@@ -22,6 +23,13 @@ class DoctorListScreen extends StatelessWidget {
         title: const Text('Find the Best Doctor'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              controller.refreshDoctors();
+            },
+            tooltip: 'Refresh doctors list',
+          ),
           Obx(
             () => IconButton(
               icon: Icon(
@@ -97,6 +105,10 @@ class DoctorListScreen extends StatelessWidget {
           Expanded(
             child: GetX<DoctorListController>(
               builder: (controller) {
+                if (controller.isLoading.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
                 if (controller.filteredDoctors.isEmpty) {
                   return const Center(child: Text('No doctors found'));
                 }
@@ -112,15 +124,19 @@ class DoctorListScreen extends StatelessWidget {
     );
   }
 
-  String _getDoctorImage(Doctor doctor) {
-    if (doctor.gender == 'female') {
-      // Use a deterministic way to alternate between doctor2 and doctor3
-      // based on the first letter of the doctor's name
-      return doctor.name.toLowerCase().contains('a')
-          ? 'assets/doctor2.png'
-          : 'assets/doctor3.png';
+  String _getDoctorImage(UserModel doctor) {
+    // Simple logic to select image based on doctor's name
+    if (doctor.name.toLowerCase().contains('a')) {
+      return 'assets/doctor2.png';
+    } else if (doctor.name.toLowerCase().contains('e')) {
+      return 'assets/doctor3.png';
+    } else if (doctor.name.toLowerCase().contains('i')) {
+      return 'assets/doctor4.png';
+    } else if (doctor.name.toLowerCase().contains('o')) {
+      return 'assets/doctor5.png';
+    } else {
+      return 'assets/doctor.png';
     }
-    return 'assets/doctor.png'; // Default image for male doctors
   }
 
   Widget _buildListView(BuildContext context, DoctorListController controller) {
@@ -131,7 +147,6 @@ class DoctorListScreen extends StatelessWidget {
         final doctor = controller.filteredDoctors[index];
         final doctorImage = _getDoctorImage(doctor);
 
-        // Rest of your list view code
         return Card(
           margin: const EdgeInsets.only(bottom: 16),
           elevation: 3,
@@ -140,7 +155,8 @@ class DoctorListScreen extends StatelessWidget {
           ),
           child: InkWell(
             onTap: () {
-              // Navigate to doctor detail page
+              // Navigate to doctor detail page or book appointment
+              Get.toNamed('/doctor-detail', arguments: doctor);
             },
             borderRadius: BorderRadius.circular(12),
             child: Padding(
@@ -149,7 +165,7 @@ class DoctorListScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Hero(
-                    tag: 'doctor-${doctor.name}',
+                    tag: 'doctor-${doctor.uid}',
                     child: Container(
                       width: 80,
                       height: 80,
@@ -178,7 +194,7 @@ class DoctorListScreen extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            if (doctor.isAvailable)
+                            if (doctor.availability != null && doctor.availability!.isNotEmpty)
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 8,
@@ -211,7 +227,7 @@ class DoctorListScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            doctor.specialty,
+                            doctor.specialty ?? 'General',
                             style: TextStyle(
                               fontSize: 12,
                               color: Theme.of(context).colorScheme.primary,
@@ -223,26 +239,20 @@ class DoctorListScreen extends StatelessWidget {
                           children: [
                             Icon(Icons.star, color: Colors.amber, size: 16),
                             Text(
-                              ' ${doctor.rating.toStringAsFixed(1)}',
+                              ' ${doctor.rating?.toStringAsFixed(1) ?? "0.0"}',
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            Text(
-                              ' (${doctor.reviewCount})',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 12,
-                              ),
-                            ),
                             const SizedBox(width: 16),
                             Icon(
-                              Icons.location_on,
+                              Icons.info_outline,
                               size: 16,
                               color: Colors.grey[600],
                             ),
+                            const SizedBox(width: 4),
                             Text(
-                              doctor.distanceText,
+                              doctor.bio != null ? 'Has bio' : 'No bio',
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 12,
@@ -255,19 +265,23 @@ class DoctorListScreen extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              '${doctor.experience} years exp.',
+                              'Tap to book',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey[700],
                               ),
                             ),
-                            Text(
-                              '\$${doctor.price.toInt()}',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.primary,
-                                fontSize: 16,
+                            ElevatedButton(
+                              onPressed: () {
+                                // Book appointment
+                                Get.toNamed('/book-appointment', arguments: doctor);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Theme.of(context).colorScheme.primary,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               ),
+                              child: const Text('Book Now'),
                             ),
                           ],
                         ),
@@ -288,7 +302,7 @@ class DoctorListScreen extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 0.8,
+        childAspectRatio: 0.75,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
@@ -297,7 +311,6 @@ class DoctorListScreen extends StatelessWidget {
         final doctor = controller.filteredDoctors[index];
         final doctorImage = _getDoctorImage(doctor);
 
-        // Rest of your grid view code
         return Card(
           elevation: 3,
           shape: RoundedRectangleBorder(
@@ -305,7 +318,8 @@ class DoctorListScreen extends StatelessWidget {
           ),
           child: InkWell(
             onTap: () {
-              // Navigate to doctor detail page
+              // Navigate to doctor detail page or book appointment
+              Get.toNamed('/doctor-detail', arguments: doctor);
             },
             borderRadius: BorderRadius.circular(12),
             child: Column(
@@ -340,7 +354,7 @@ class DoctorListScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          doctor.specialty,
+                          doctor.specialty ?? 'General',
                           style: const TextStyle(fontSize: 12),
                         ),
                         const SizedBox(height: 4),
@@ -348,35 +362,32 @@ class DoctorListScreen extends StatelessWidget {
                           children: [
                             Icon(Icons.star, color: Colors.amber, size: 14),
                             Text(
-                              ' ${doctor.rating.toStringAsFixed(1)}',
+                              ' ${doctor.rating?.toStringAsFixed(1) ?? "0.0"}',
                               style: const TextStyle(fontSize: 12),
-                            ),
-                            const Spacer(),
-                            Text(
-                              '\$${doctor.price.toInt()}',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 6),
-                          decoration: BoxDecoration(
-                            color:
-                                Theme.of(context).colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Center(
-                            child: Text(
-                              'Book Now',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.primary,
+                        const SizedBox(height: 8),
+                        InkWell(
+                          onTap: () {
+                            // Book appointment
+                            Get.toNamed('/book-appointment', arguments: doctor);
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Center(
+                              child: Text(
+                                'Book Now',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
                               ),
                             ),
                           ),

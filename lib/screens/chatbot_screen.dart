@@ -1,109 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
-class Message {
-  final String text;
-  final bool isUserMessage;
-  final DateTime timestamp;
-
-  Message({
-    required this.text,
-    required this.isUserMessage,
-    DateTime? timestamp,
-  }) : timestamp = timestamp ?? DateTime.now();
-}
-
-class ChatbotController extends GetxController {
-  final RxList<Message> messages = <Message>[].obs;
-  final TextEditingController messageController = TextEditingController();
-  final ScrollController scrollController = ScrollController();
-
-  @override
-  void onInit() {
-    super.onInit();
-    // Add welcome message
-    messages.add(
-      Message(
-        text: "Hello! I'm Dr. Bot. How can I help you today?",
-        isUserMessage: false,
-      ),
-    );
-  }
-
-  @override
-  void onClose() {
-    messageController.dispose();
-    scrollController.dispose();
-    super.onClose();
-  }
-
-  void sendMessage() {
-    if (messageController.text.trim().isEmpty) return;
-
-    final userMessage = Message(
-      text: messageController.text.trim(),
-      isUserMessage: true,
-    );
-    messages.add(userMessage);
-    messageController.clear();
-
-    // Scroll to the bottom of the chat
-    _scrollToBottom();
-
-    // Simulate bot thinking
-    Future.delayed(const Duration(seconds: 1), () {
-      _processBotResponse(userMessage.text);
-    });
-  }
-
-  void _scrollToBottom() {
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (scrollController.hasClients) {
-        scrollController.animateTo(
-          scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
-  }
-
-  void _processBotResponse(String userMessage) {
-    // Simple predefined responses
-    final lowercaseMessage = userMessage.toLowerCase();
-    String botResponse;
-
-    if (lowercaseMessage.contains('hello') ||
-        lowercaseMessage.contains('hi') ||
-        lowercaseMessage.contains('hey')) {
-      botResponse = "Hello there! How are you feeling today?";
-    } else if (lowercaseMessage.contains('pain') ||
-        lowercaseMessage.contains('hurt')) {
-      botResponse =
-          "I'm sorry to hear you're in pain. Can you describe where it hurts and how severe it is on a scale of 1-10?";
-    } else if (lowercaseMessage.contains('headache') ||
-        lowercaseMessage.contains('head pain')) {
-      botResponse =
-          "Headaches can have many causes. Are you hydrated enough? Have you been getting adequate sleep? If this is severe or persistent, please consult with one of our doctors.";
-    } else if (lowercaseMessage.contains('appointment') ||
-        lowercaseMessage.contains('book') ||
-        lowercaseMessage.contains('schedule')) {
-      botResponse =
-          "To book an appointment, you can use the Doctors tab to find a specialist that suits your needs, then tap on 'Book Now'.";
-    } else if (lowercaseMessage.contains('thank')) {
-      botResponse = "You're welcome! Is there anything else I can help with?";
-    } else {
-      botResponse =
-          "I understand you're concerned about your health. For more specific advice, I recommend consulting with one of our specialists. Is there something specific you'd like to know?";
-    }
-
-    // Add bot response to the chat
-    messages.add(Message(text: botResponse, isUserMessage: false));
-
-    // Scroll to the bottom of the chat
-    _scrollToBottom();
-  }
-}
+import '../controllers/chatbot_controller.dart';
 
 class ChatbotScreen extends StatelessWidget {
   const ChatbotScreen({Key? key}) : super(key: key);
@@ -165,6 +62,31 @@ class ChatbotScreen extends StatelessWidget {
               ),
             ),
           ),
+
+          // Typing indicator
+          Obx(() => chatController.isProcessing
+              ? Container(
+                  padding: const EdgeInsets.only(left: 16, bottom: 8),
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        child: const Icon(Icons.health_and_safety, color: Colors.white),
+                        radius: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        "Dr. Bot is typing...",
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : const SizedBox.shrink()),
 
           // Input area
           Container(
@@ -232,8 +154,7 @@ class ChatbotScreen extends StatelessWidget {
         color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
       ),
       onPressed: () {
-        controller.messageController.text = text;
-        controller.sendMessage();
+        controller.addSuggestion(text);
       },
     );
   }

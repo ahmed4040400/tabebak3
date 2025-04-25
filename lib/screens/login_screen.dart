@@ -10,37 +10,41 @@ class LoginScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final authController = Get.find<AuthController>();
 
-    return FlutterLogin(
-      title: 'Tabebak',
-      logo: const AssetImage('assets/logo.png'),
-      onLogin: authController.authUser,
-      onSignup: authController.signupUser,
-      hideForgotPasswordButton: true,
-      onSubmitAnimationCompleted: () {
-        Get.offAllNamed('/main'); 
-      },
-      onRecoverPassword: authController.recoverPassword,
-      theme: LoginTheme(
-        primaryColor: Colors.teal,
-        accentColor: Colors.tealAccent,
+    return Stack(
+      children: [
+        FlutterLogin(
+          title: 'Tabebak',
+          logo: const AssetImage('assets/logo.png'),
+          onLogin: authController.authUser,
+          onSignup: authController.signupUser,
+          hideForgotPasswordButton: true,
+          onSubmitAnimationCompleted: () {
+            Get.offAllNamed('/main');
+          },
+          onRecoverPassword: authController.recoverPassword,
+          theme: LoginTheme(
+            primaryColor: Colors.teal,
+            accentColor: Colors.tealAccent,
 
-        cardTheme: CardTheme(
-          color: Colors.white,
-          elevation: 5,
-          margin: const EdgeInsets.only(top: 15),
-          shape: ContinuousRectangleBorder(
-            borderRadius: BorderRadius.circular(20.0),
+            cardTheme: CardTheme(
+              color: Colors.white,
+              elevation: 5,
+              margin: const EdgeInsets.only(top: 15),
+              shape: ContinuousRectangleBorder(
+                borderRadius: BorderRadius.circular(20.0),
+              ),
+            ),
+          ),
+          messages: LoginMessages(
+            userHint: 'Email',
+            passwordHint: 'Password',
+            loginButton: 'LOG IN',
+            signupButton: 'REGISTER',
+            recoverPasswordButton: 'RECOVER',
+            goBackButton: 'GO BACK',
           ),
         ),
-      ),
-      messages: LoginMessages(
-        userHint: 'Email',
-        passwordHint: 'Password',
-        loginButton: 'LOG IN',
-        signupButton: 'REGISTER',
-        recoverPasswordButton: 'RECOVER',
-        goBackButton: 'GO BACK',
-      ),
+      ],
     );
   }
 }

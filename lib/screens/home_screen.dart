@@ -4,6 +4,9 @@ import 'package:faker/faker.dart' as faker;
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import '../controllers/auth_controller.dart';
 import 'doctor_list_screen.dart';
+import 'pharmacy_screen.dart';
+import 'hospital_screen.dart';
+import 'ambulance_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key, required this.tabController}) : super(key: key);
@@ -57,49 +60,64 @@ class HomeScreen extends StatelessWidget {
     final fakerInstance = faker.Faker();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Tabebak'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Find your desire health solution',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search doctor, drugs, articles...',
-                  prefixIcon: const Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
+      // AppBar is removed since it will be part of the bottom navigation flow
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Welcome message at the top
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          'Hello, Ahmed',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          'Find your desire health solution',
+                          style: TextStyle(fontSize: 14, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildCategoryIcon(context, Icons.local_hospital, 'Doctor'),
-                  _buildCategoryIcon(context, Icons.local_pharmacy, 'Pharmacy'),
-                  _buildCategoryIcon(context, Icons.local_hospital, 'Hospital'),
-                  _buildCategoryIcon(context, Icons.local_taxi, 'Ambulance'),
-                ],
-              ),
-              const SizedBox(height: 16),
-              _buildBanner(),
-              const SizedBox(height: 16),
-              _buildSectionTitle('Top Doctor'),
-              _buildDoctorList(),
-              const SizedBox(height: 16),
-              _buildSectionTitle('Health article'),
-              _buildArticleList(),
-            ],
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildCategoryIcon(context, Icons.local_hospital, 'Doctor'),
+                    _buildCategoryIcon(
+                      context,
+                      Icons.local_pharmacy,
+                      'Pharmacy',
+                    ),
+                    _buildCategoryIcon(
+                      context,
+                      Icons.local_hospital,
+                      'Hospital',
+                    ),
+                    _buildCategoryIcon(context, Icons.local_taxi, 'Ambulance'),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildBanner(),
+                const SizedBox(height: 16),
+                _buildSectionTitle('Top Doctor'),
+                _buildDoctorList(),
+                const SizedBox(height: 16),
+                _buildSectionTitle('Health article'),
+                _buildArticleList(),
+              ],
+            ),
           ),
         ),
       ),
@@ -111,6 +129,12 @@ class HomeScreen extends StatelessWidget {
       onTap: () {
         if (label == 'Doctor') {
           Get.to(() => DoctorListScreen());
+        } else if (label == 'Pharmacy') {
+          Get.to(() => PharmacyScreen());
+        } else if (label == 'Hospital') {
+          Get.to(() => HospitalScreen());
+        } else if (label == 'Ambulance') {
+          Get.to(() => AmbulanceScreen());
         }
       },
       child: Column(

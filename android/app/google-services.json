@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "422585181545",
+    "project_id": "tabebak-9a2c4",
+    "storage_bucket": "tabebak-9a2c4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:422585181545:android:9e18d2763ffbf5bfd8c9f8",
+        "android_client_info": {
+          "package_name": "com.example.tabebak"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxOjV21bZUKE3KTc8ilIbgCuZ5kgBfgAQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
