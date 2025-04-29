@@ -186,15 +186,6 @@ class AuthController extends GetxController {
     Get.offAllNamed('/login');
   }
 
-
-
-
-
-
-
-
-
-
   // Create admin account (can only be called by existing admins)
   Future<void> createAdminAccount({
     required String email,
@@ -260,33 +251,6 @@ class AuthController extends GetxController {
       rethrow;
     }
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   // Register a request to become a doctor (pending approval)
   Future<void> registerDoctorRequest({
