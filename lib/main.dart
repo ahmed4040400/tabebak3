@@ -29,6 +29,9 @@ void main() async {
       await seeder.seedDatabase();
     }
     
+
+
+    
   } catch (e) {
     print("Error initializing Firebase: $e");
     // Continue without Firebase if it fails to initialize
