@@ -97,7 +97,7 @@ class ChatbotController extends GetxController {
     // Show typing indicator
     _isProcessing.value = true;
 
-    // Set a fallback timer with much longer timeout (3 minutes instead of 20 seconds)
+    // Set a fallback timer with much longer timeout
     Timer? fallbackTimer;
     fallbackTimer = Timer(const Duration(minutes: 3), () {
       if (_isProcessing.value) {

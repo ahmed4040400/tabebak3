@@ -17,127 +17,136 @@ class ChatbotScreen extends StatelessWidget {
     }
 
     return Scaffold(
+      // Explicitly set resizeToAvoidBottomInset to true to ensure the screen resizes when keyboard appears
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text('Health Assistant'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
-      body: Column(
-        children: [
-          // Chat suggestion chips
-          Container(
-            padding: const EdgeInsets.all(12),
-            child: Wrap(
-              spacing: 8,
-              children: [
-                _buildSuggestionChip(
-                  context,
-                  "I have a headache",
-                  chatController,
-                ),
-                _buildSuggestionChip(
-                  context,
-                  "Book appointment",
-                  chatController,
-                ),
-                _buildSuggestionChip(
-                  context,
-                  "Medication advice",
-                  chatController,
-                ),
-              ],
-            ),
-          ),
-
-          // Chat messages
-          Expanded(
-            child: Obx(
-              () => ListView.builder(
-                controller: chatController.scrollController,
-                padding: const EdgeInsets.all(16),
-                itemCount: chatController.messages.length,
-                itemBuilder: (context, index) {
-                  final message = chatController.messages[index];
-                  return _buildMessageBubble(message, context);
-                },
-              ),
-            ),
-          ),
-
-          // Typing indicator
-          Obx(() => chatController.isProcessing
-              ? Container(
-                  padding: const EdgeInsets.only(left: 16, bottom: 8),
-                  alignment: Alignment.centerLeft,
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        child: const Icon(Icons.health_and_safety, color: Colors.white),
-                        radius: 16,
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        "Dr. Bot is typing...",
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              : const SizedBox.shrink()),
-
-          // Input area
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.2),
-                  spreadRadius: 1,
-                  blurRadius: 3,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: SafeArea(
-              child: Row(
+      body: SafeArea(
+        // Use SafeArea for the entire body
+        child: Column(
+          children: [
+            // Chat suggestion chips
+            Container(
+              padding: const EdgeInsets.all(12),
+              child: Wrap(
+                spacing: 8,
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: chatController.messageController,
-                      decoration: InputDecoration(
-                        hintText: "Type your health concern...",
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(25.0),
-                          borderSide: BorderSide.none,
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey[100],
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 10,
-                        ),
-                      ),
-                      textCapitalization: TextCapitalization.sentences,
-                      onSubmitted: (_) => chatController.sendMessage(),
-                    ),
+                  _buildSuggestionChip(
+                    context,
+                    "I have a headache",
+                    chatController,
                   ),
-                  const SizedBox(width: 8),
-                  FloatingActionButton(
-                    onPressed: chatController.sendMessage,
-                    mini: true,
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    elevation: 2,
-                    child: const Icon(Icons.send, color: Colors.white),
+                  _buildSuggestionChip(
+                    context,
+                    "Book appointment",
+                    chatController,
+                  ),
+                  _buildSuggestionChip(
+                    context,
+                    "Medication advice",
+                    chatController,
                   ),
                 ],
               ),
             ),
-          ),
-        ],
+
+            // Chat messages
+            Expanded(
+              child: Obx(
+                () => ListView.builder(
+                  controller: chatController.scrollController,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: chatController.messages.length,
+                  itemBuilder: (context, index) {
+                    final message = chatController.messages[index];
+                    return _buildMessageBubble(message, context);
+                  },
+                ),
+              ),
+            ),
+
+            // Typing indicator
+            Obx(() => chatController.isProcessing
+                ? Container(
+                    padding: const EdgeInsets.only(left: 16, bottom: 8),
+                    alignment: Alignment.centerLeft,
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          child: const Icon(Icons.health_and_safety, color: Colors.white),
+                          radius: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          "Dr. Bot is typing...",
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : const SizedBox.shrink()),
+
+            // Input area
+            Padding(
+              // Added padding to ensure input is visible above keyboard
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom > 0 ? 8 : 0,
+              ),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 1,
+                      blurRadius: 3,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: chatController.messageController,
+                        decoration: InputDecoration(
+                          hintText: "Type your health concern...",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(25.0),
+                            borderSide: BorderSide.none,
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[100],
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 10,
+                          ),
+                        ),
+                        textCapitalization: TextCapitalization.sentences,
+                        onSubmitted: (_) => chatController.sendMessage(),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    FloatingActionButton(
+                      onPressed: chatController.sendMessage,
+                      mini: true,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      elevation: 2,
+                      child: const Icon(Icons.send, color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
