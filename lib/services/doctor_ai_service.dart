@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class DoctorAIService {
   static const String apiEndpoint = 'https://api.deepseek.com/chat/completions';
-  static const String apiKey = 'sk-8541fb10c0b54acd804e81b043f1ffe6';
+  static const String apiKey = 'sk-8d7ea47223ab490393d3baf94a1527a3';
 
   static Future<String> getResponse(String userMessage) async {
     try {
