@@ -15,6 +15,7 @@ class UserModel {
   final String? bio;
   final double? rating;
   final List<String>? availability;
+  final double? price; // Add this property
   
   // Patient specific fields
   final String? medicalHistory;
@@ -35,6 +36,7 @@ class UserModel {
     this.medicalHistory,
     this.address,
     this.age,
+    this.price,
   });
   
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
@@ -58,6 +60,7 @@ class UserModel {
       medicalHistory: data['medicalHistory'],
       address: data['address'],
       age: data['age'],
+      price: data['price']?.toDouble(),
     );
   }
   
@@ -73,6 +76,7 @@ class UserModel {
         'bio': bio,
         'rating': rating,
         'availability': availability,
+        'price': price,
       },
       if (role == UserRole.patient) ...{
         'medicalHistory': medicalHistory,

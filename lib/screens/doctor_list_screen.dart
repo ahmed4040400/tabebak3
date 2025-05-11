@@ -30,6 +30,7 @@ class DoctorListScreen extends StatelessWidget {
             },
             tooltip: 'Refresh doctors list',
           ),
+          _buildSortButton(context, controller),
           Obx(
             () => IconButton(
               icon: Icon(
@@ -66,38 +67,45 @@ class DoctorListScreen extends StatelessWidget {
                   onChanged: (_) => controller.filterDoctors(),
                 ),
                 const SizedBox(height: 16),
-                SizedBox(
-                  height: 40,
-                  child: Obx(
-                    () => ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: controller.specialties.length,
-                      itemBuilder: (context, index) {
-                        final specialty = controller.specialties[index];
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: Obx(
-                            () => FilterChip(
-                              label: Text(specialty),
-                              selected:
-                                  controller.selectedSpecialty.value ==
-                                  specialty,
-                              onSelected:
-                                  (selected) => controller.selectSpecialty(
-                                    specialty,
-                                    selected,
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 40,
+                        child: Obx(
+                          () => ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: controller.specialties.length,
+                            itemBuilder: (context, index) {
+                              final specialty = controller.specialties[index];
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: Obx(
+                                  () => FilterChip(
+                                    label: Text(specialty),
+                                    selected:
+                                        controller.selectedSpecialty.value ==
+                                        specialty,
+                                    onSelected:
+                                        (selected) => controller.selectSpecialty(
+                                          specialty,
+                                          selected,
+                                        ),
+                                    backgroundColor: Colors.white,
+                                    selectedColor:
+                                        Theme.of(
+                                          context,
+                                        ).colorScheme.primaryContainer,
                                   ),
-                              backgroundColor: Colors.white,
-                              selectedColor:
-                                  Theme.of(
-                                    context,
-                                  ).colorScheme.primaryContainer,
-                            ),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
+                        ),
+                      ),
                     ),
-                  ),
+                    Obx(() => _buildSortChip(context, controller)),
+                  ],
                 ),
               ],
             ),
@@ -121,6 +129,144 @@ class DoctorListScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSortButton(BuildContext context, DoctorListController controller) {
+    return PopupMenuButton<DoctorSortOption>(
+      icon: const Icon(Icons.sort),
+      tooltip: 'Sort doctors',
+      onSelected: (DoctorSortOption option) {
+        controller.sortDoctors(option);
+      },
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<DoctorSortOption>>[
+        const PopupMenuItem<DoctorSortOption>(
+          value: DoctorSortOption.default_sort,
+          child: Text('Default sort'),
+        ),
+        const PopupMenuItem<DoctorSortOption>(
+          value: DoctorSortOption.rating_high_to_low,
+          child: Text('Highest rated first'),
+        ),
+        const PopupMenuItem<DoctorSortOption>(
+          value: DoctorSortOption.price_low_to_high,
+          child: Text('Price: low to high'),
+        ),
+        const PopupMenuItem<DoctorSortOption>(
+          value: DoctorSortOption.price_high_to_low,
+          child: Text('Price: high to low'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSortChip(BuildContext context, DoctorListController controller) {
+    String sortText;
+    IconData sortIcon;
+    
+    switch (controller.selectedSortOption.value) {
+      case DoctorSortOption.rating_high_to_low:
+        sortText = 'Top Rated';
+        sortIcon = Icons.star;
+        break;
+      case DoctorSortOption.price_low_to_high:
+        sortText = 'Price: Low→High';
+        sortIcon = Icons.arrow_upward;
+        break;
+      case DoctorSortOption.price_high_to_low:
+        sortText = 'Price: High→Low';
+        sortIcon = Icons.arrow_downward;
+        break;
+      case DoctorSortOption.default_sort:
+      default:
+        sortText = 'Default Sort';
+        sortIcon = Icons.sort;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 8.0),
+      child: FilterChip(
+        label: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(sortIcon, size: 16, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 4),
+            Text(sortText, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.primary)),
+          ],
+        ),
+        // Always show as selected since we always have a sort type active
+        selected: true,
+        onSelected: (_) {
+          _showSortOptions(context, controller);
+        },
+        backgroundColor: Colors.white,
+        selectedColor: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.7),
+      ),
+    );
+  }
+
+  void _showSortOptions(BuildContext context, DoctorListController controller) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text(
+                  'Sort Doctors By',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.sort),
+                title: const Text('Default sort'),
+                selected: controller.selectedSortOption.value == DoctorSortOption.default_sort,
+                onTap: () {
+                  controller.sortDoctors(DoctorSortOption.default_sort);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.star),
+                title: const Text('Highest rated first'),
+                selected: controller.selectedSortOption.value == DoctorSortOption.rating_high_to_low,
+                onTap: () {
+                  controller.sortDoctors(DoctorSortOption.rating_high_to_low);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.arrow_upward),
+                title: const Text('Price: low to high'),
+                selected: controller.selectedSortOption.value == DoctorSortOption.price_low_to_high,
+                onTap: () {
+                  controller.sortDoctors(DoctorSortOption.price_low_to_high);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.arrow_downward),
+                title: const Text('Price: high to low'),
+                selected: controller.selectedSortOption.value == DoctorSortOption.price_high_to_low,
+                onTap: () {
+                  controller.sortDoctors(DoctorSortOption.price_high_to_low);
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -258,6 +404,21 @@ class DoctorListScreen extends StatelessWidget {
                                 fontSize: 12,
                               ),
                             ),
+                            const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.blue[50],
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                '${_getDoctorPrice(doctor)} EGP',
+                                style: TextStyle(
+                                  color: Colors.blue[800],
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 8),
@@ -359,11 +520,31 @@ class DoctorListScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Icon(Icons.star, color: Colors.amber, size: 14),
-                            Text(
-                              ' ${doctor.rating?.toStringAsFixed(1) ?? "0.0"}',
-                              style: const TextStyle(fontSize: 12),
+                            Row(
+                              children: [
+                                Icon(Icons.star, color: Colors.amber, size: 14),
+                                Text(
+                                  ' ${doctor.rating?.toStringAsFixed(1) ?? "0.0"}',
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.blue[50],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '${_getDoctorPrice(doctor)} EGP',
+                                style: TextStyle(
+                                  color: Colors.blue[800],
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11,
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -402,5 +583,41 @@ class DoctorListScreen extends StatelessWidget {
         );
       },
     );
+  }
+
+  String _getDoctorPrice(UserModel doctor) {
+    // Generate realistic prices for Egyptian market based on specialty and name length
+    if (doctor.price != null) {
+      return doctor.price!.toStringAsFixed(0);
+    }
+    
+    // Fallback pricing logic if price isn't set in the model
+    int basePrice = 150; // Base consultation price
+    
+    // Adjust price based on specialty
+    if (doctor.specialty != null) {
+      switch (doctor.specialty!.toLowerCase()) {
+        case 'cardiology':
+        case 'neurology':
+        case 'oncology':
+        case 'orthopedics':
+          basePrice += 250; // More expensive specialties
+          break;
+        case 'dermatology':
+        case 'pediatrics':
+        case 'psychiatry':
+          basePrice += 150; // Medium-priced specialties
+          break;
+        default:
+          basePrice += 50; // General specialties
+      }
+    }
+    
+    // Adjust price based on rating
+    if (doctor.rating != null) {
+      basePrice += (doctor.rating! * 20).toInt();
+    }
+    
+    return basePrice.toString();
   }
 }

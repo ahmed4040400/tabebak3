@@ -1,4 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:get/get.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'package:tabebak/controllers/chatbot_controller.dart';
+import 'routes/app_routes.dart';
+import 'controllers/auth_controller.dart';
+import 'controllers/doctor_list_controller.dart';
+import 'controllers/admin_controller.dart';
+import 'controllers/patient_controller.dart';
+import 'controllers/doctor_controller.dart';
+import 'screens/chatbot_screen.dart';
+import 'utils/firebase_seeder.dart';
+
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -67,7 +81,6 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: '/login',
       getPages: AppRoutes.routes,
-      debugShowCheckedModeBanner: false,
-    );
-  }
+      debugShowCheckedModeBanner: false,);
+  } 
 }
